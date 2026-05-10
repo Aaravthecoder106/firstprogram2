@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 
 # Render ke environment variables se API Key uthayega
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY = "sk-or-v1-ec1db7a718415629974887eed26b1 bfb728f5435d8e39301a91be30a4c d846c7"
 
 @app.route('/')
 def index():
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     # Render automatically port assign karta hai
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+    
     
     
 
