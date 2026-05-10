@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garold AI</title>
+    <style>
+        /* OLED BLACK THEME */
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; /* Viewport height fix */
+            overflow: hidden; 
+        }
+
+        /* Top Right Branding */
+        .top-branding {
+            position: absolute; top: 20px; right: 25px; font-size: 15px; font-weight: 600;
+            color: #555; display: flex; align-items: center; gap: 8px; z-index: 100;
+        }
+        .top-branding svg { width: 18px; height: 18px; fill: currentColor; }
+
+        #chat-container { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%; 
+            max-width: 800px; 
+            margin: 0 auto;
+            position: relative;
+            height: 100%; /* Full container height */
+        }
+
+        /* CHATBOX FIX */
+        #chatbox { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 80px 20px 20px 20px; 
+            display: none; 
+            flex-direction: column; 
+            gap: 25px; 
+            scroll-behavior: smooth;
+            scrollbar-width: none; 
+        }
+        #chatbox::-webkit-scrollbar { display: none; }
+
+        /* Messages Styling */
+        .message { max-width: 85%; padding: 12px 18px; border-radius: 20px; line-height: 1.6; word-wrap: break-word; }
+        .user-message { align-self: flex-end; background-color: #1a1a1a; border: 1px solid #333; }
+        .ai-message { align-self: flex-start; color: #ececec; white-space: pre-wrap; }
+        .img-box { width: 100%; border-radius: 15px; margin-top: 10px; border: 1px solid #333; }
+
+        /* SEARCH BAR FIX */
+        .bottom-area { 
+            padding: 20px; 
+            background-color: #000; 
+            border-top: 1px solid #222;
+            z-index: 10;
+        }
+
+        .main-interface { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 20px; }
+        h2 { font-size: 32px; font-weight: 600; margin-bottom: 30px; text-align: center; }
+
+        .search-wrapper { position: relative; width: 100%; display: flex; align-items: center; }
+        input {
+            width: 100%; background-color: #121212; border: 1px solid #333; border-radius: 35px;
+            padding: 18px 110px 18px 25px; color: white; font-size: 17px; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: #007bff; }
+
+        .btn-group { position: absolute; right: 10px; display: flex; gap: 10px; align-items: center; }
+        .icon-btn { background: none; border: none; color: #555; cursor: pointer; display: flex; align-items: center; }
+        .send-btn { background-color: #007bff; color: white; border-radius: 50%; width: 40px; height: 40px; justify-content: center; font-weight: bold;}
+
+        /* Mic Glow Animation */
+        .mic-active svg { fill: #ff4b4b !important; filter: drop-shadow(0 0 10px #ff4b4b); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% {transform: scale(1);} 50% {transform: scale(1.2);} }
+    </style>
+</head>
+<body>
+
+    <div class="top-branding">
+        <svg viewBox="0 0 24 24"><path d="M12 0l2.8 9.2L24 12l-9.2 2.8L12 24l-2.8-9.2L0 12l9.2-2.8L12 0z"/></svg>
+        Garold
+    </div>
+
+    <div id="chat-container">
+        <div id="main-ui" class="main-interface">
+            <h2>What are you working on?</h2>
+            <div class="search-wrapper">
+                <input type="text" id="userInput" placeholder="Message Garold..." onkeypress="if(event.keyCode===13)send('userInput')">
+                <div class="btn-group">
+                    <button class="icon-btn" onclick="toggleMic('userInput')" id="micBtn">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                    </button>
+                    <button class="icon-btn send-btn" onclick="send('userInput')">↑</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="chatbox"></div>
+
+        <div id="bottom-bar" class="bottom-area" style="display: none;">
+            <div class="search-wrapper">
+                <input type="text" id="secondaryInput" placeholder="Message Garold..." onkeypress="if(event.keyCode===13)send('secondaryInput')">
+                <div class="btn-group">
+                    <button class="icon-btn" onclick="toggleMic('secondaryInput')" id="micBtnSec">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                    </button>
+                    <button class="icon-btn send-btn" onclick="send('secondaryInput')">↑</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        let isRecording = false;
+
+        function toggleMic(inputId) {
+            const btn = inputId === 'userInput' ? document.getElementById("micBtn") : document.getElementById("micBtnSec");
+            if (!isRecording) {
+                recognition.start();
+                isRecording = true;
+                btn.classList.add("mic-active");
+            } else {
+                recognition.stop();
+            }
+        }
+
+        recognition.onresult = (e) => {
+            let t = e.results[0][0].transcript;
+            let targetId = (document.getElementById("main-ui").style.display === "none") ? "secondaryInput" : "userInput";
+            document.getElementById(targetId).value = t;
+            send(targetId);
+        };
+
+        recognition.onend = () => {
+            isRecording = false;
+            document.querySelectorAll(".icon-btn").forEach(b => b.classList.remove("mic-active"));
+        };
+
+        async function send(inputId) {
+            let val = document.getElementById(inputId).value;
+            if(!val) return;
+
+            document.getElementById("main-ui").style.display = "none";
+            document.getElementById("chatbox").style.display = "flex";
+            document.getElementById("bottom-bar").style.display = "block";
+            
+            addMsg(val, 'user');
+            document.getElementById(inputId).value = "";
+
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: val})
+            });
+            const data = await res.json();
+
+            if(data.is_image) {
+                let imgUrl = `https://pollinations.ai/p/${encodeURIComponent(val)}?width=1024&height=1024&nologo=true`;
+                addMsg(`<img src="${imgUrl}" class="img-box">`, 'ai');
+            } else {
+                addMsg(data.reply, 'ai');
+            }
+        }
+
+        function addMsg(txt, sender) {
+            let b = document.getElementById("chatbox");
+            let c = (sender === 'user') ? 'user-message' : 'ai-message';
+            let label = (sender === 'user') ? '' : `<div style="margin-bottom:8px; color:#555; font-size:13px;"><b>Garold</b></div>`;
+            b.innerHTML += `<div class="message ${c}">${label}${txt}</div>`;
+            
+            // Wait a tiny bit for UI to render then scroll
+            setTimeout(() => { b.scrollTop = b.scrollHeight; }, 50);
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
