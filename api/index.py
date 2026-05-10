@@ -5,7 +5,7 @@ import requests
 app = Flask(__name__)
 
 # Render ke environment variables se API Key uthayega
-OPENROUTER_API_KEY = "sk-or-v1-ec1db7a718415629974887eed26b1 bfb728f5435d8e39301a91be30a4c d846c7"
+OPENROUTER_API_KEY = "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"
 
 @app.route('/')
 def index():
